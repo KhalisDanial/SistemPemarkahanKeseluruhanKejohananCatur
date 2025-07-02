@@ -93,7 +93,7 @@ def load_and_process_excel(file, required_columns):
     return df
 
 
-if check_password():
+if check_password(): 
 
     # Get user info
     name = st.session_state.get("user_name", "Pengguna")
@@ -104,10 +104,13 @@ if check_password():
         gcp_secrets = st.secrets["gcp_service_account"]
         creds = Credentials.from_service_account_info(
             gcp_secrets,
-            scopes=["https://www.googleapis.com/auth/spreadsheets"]
+            scopes=[
+                "https://www.googleapis.com/auth/spreadsheets",
+                "https://www.googleapis.com/auth/drive"
+            ]
         )
         client = gspread.authorize(creds)
-        SPREADSHEET_NAME = "Users Logs"  # <-- Change to your sheet name
+        SPREADSHEET_NAME = "Users Logs"  # <-- your sheet name
         sheet = client.open(SPREADSHEET_NAME).sheet1
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         sheet.append_row([timestamp, name, school])
@@ -117,12 +120,10 @@ if check_password():
     # -------------------
     # Paths & encode images
     # -------------------
-
-
-    BASE_DIR = Path(__file__).parent  # folder where app.py is located
-
+    BASE_DIR = Path(__file__).parent
     logo_path = BASE_DIR / "media" / "logo baharu mssperak.jpg"
     pattern_path = BASE_DIR / "media" / "photo-1625750331870-624de6fd3452.jpeg"
+
 
     encoded_logo = get_base64_image(logo_path)
     encoded_pattern = get_base64_image(pattern_path)
