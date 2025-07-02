@@ -85,8 +85,11 @@ def load_and_process_excel(file, required_columns):
 # Paths & encode images
 # -------------------
 
-logo_path = Path("media/logo baharu mssperak.jpg")
-pattern_path = Path("media\photo-1625750331870-624de6fd3452.jpeg")
+
+BASE_DIR = Path(__file__).parent  # folder where app.py is located
+
+logo_path = BASE_DIR / "media" / "logo baharu mssperak.jpg"
+pattern_path = BASE_DIR / "media" / "photo-1625750331870-624de6fd3452.jpeg"
 
 encoded_logo = get_base64_image(logo_path)
 encoded_pattern = get_base64_image(pattern_path)
