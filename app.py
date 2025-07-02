@@ -14,43 +14,29 @@ from datetime import datetime
 PASSWORD = st.secrets["passwords"]["main"]
 
 def check_password():
-    # Display welcome message
-    st.markdown("""
-        <div style='text-align: center; margin-bottom: 20px;'>
-            <h2>👋 Selamat datang ke Sistem Pemarkahan Keseluruhan Kejohanan Catur</h2>
-            <p>Masukkan nama, sekolah/kelab, dan kata laluan untuk mula menggunakan sistem.</p>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Input fields
-    st.text_input("Nama:", key="user_name")
-    st.text_input("Sekolah/Institusi/Kelab:", key="user_school")
-    st.text_input("Masukkan kata laluan:", type="password", key="password")
-
-    # Check password after user input
-    if "password_correct" not in st.session_state:
-        st.session_state["password_correct"] = None
-
-    if st.session_state["password_correct"] is None and st.session_state["password"]:
+    def password_entered():
         if st.session_state["password"] == PASSWORD:
             st.session_state["password_correct"] = True
         else:
             st.session_state["password_correct"] = False
 
-    if st.session_state["password_correct"] is False:
+    if "password_correct" not in st.session_state:
+        st.text_input("Nama:", key="user_name")
+        st.text_input("Sekolah/Institusi/Kelab:", key="user_school")
+        st.text_input("Masukkan kata laluan:", type="password", on_change=password_entered, key="password")
+        return False
+    elif not st.session_state["password_correct"]:
+        st.text_input("Nama:", key="user_name")
+        st.text_input("Sekolah/Institusi/Kelab:", key="user_school")
+        st.text_input("Masukkan kata laluan:", type="password", on_change=password_entered, key="password")
         st.error("Kata laluan salah")
-
-    # Footer / credits
-    st.markdown("""
-        <div style='text-align: center; font-size: 12px; color: gray; margin-top: 30px;'>
-            Developed by Khalis | AI-assisted (ChatGPT)
-        </div>
-    """, unsafe_allow_html=True)
-
-    return st.session_state["password_correct"] is True
-
-
-
+        return False
+    else:
+        # Successful login, show welcome page
+        name = st.session_state.get("user_name", "Pengguna")
+        school = st.session_state.get("user_school", "-")
+        st.success(f"Selamat datang, **{name}** dari **{school}**!")
+        return True
 
 # -------------------
 # Points logic
@@ -107,7 +93,7 @@ def load_and_process_excel(file, required_columns):
     return df
 
 
-if check_password(): 
+if check_password():
 
     # Get user info
     name = st.session_state.get("user_name", "Pengguna")
@@ -117,14 +103,15 @@ if check_password():
     try:
         gcp_secrets = st.secrets["gcp_service_account"]
         creds = Credentials.from_service_account_info(
-            gcp_secrets,
-            scopes=[
-                "https://www.googleapis.com/auth/spreadsheets",
-                "https://www.googleapis.com/auth/drive"
-            ]
-        )
+    gcp_secrets,
+    scopes=[
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+        ]
+    )
+
         client = gspread.authorize(creds)
-        SPREADSHEET_NAME = "Users Logs"  # <-- your sheet name
+        SPREADSHEET_NAME = "Users Logs"  # <-- Change to your sheet name
         sheet = client.open(SPREADSHEET_NAME).sheet1
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         sheet.append_row([timestamp, name, school])
@@ -134,10 +121,12 @@ if check_password():
     # -------------------
     # Paths & encode images
     # -------------------
-    BASE_DIR = Path(__file__).parent
+
+
+    BASE_DIR = Path(__file__).parent  # folder where app.py is located
+
     logo_path = BASE_DIR / "media" / "logo baharu mssperak.jpg"
     pattern_path = BASE_DIR / "media" / "photo-1625750331870-624de6fd3452.jpeg"
-
 
     encoded_logo = get_base64_image(logo_path)
     encoded_pattern = get_base64_image(pattern_path)
