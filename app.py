@@ -14,29 +14,43 @@ from datetime import datetime
 PASSWORD = st.secrets["passwords"]["main"]
 
 def check_password():
-    def password_entered():
+    # Display welcome message
+    st.markdown("""
+        <div style='text-align: center; margin-bottom: 20px;'>
+            <h2>👋 Selamat datang ke Sistem Pemarkahan Keseluruhan Kejohanan Catur</h2>
+            <p>Masukkan nama, sekolah/kelab, dan kata laluan untuk mula menggunakan sistem.</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Input fields
+    st.text_input("Nama:", key="user_name")
+    st.text_input("Sekolah/Institusi/Kelab:", key="user_school")
+    st.text_input("Masukkan kata laluan:", type="password", key="password")
+
+    # Check password after user input
+    if "password_correct" not in st.session_state:
+        st.session_state["password_correct"] = None
+
+    if st.session_state["password_correct"] is None and st.session_state["password"]:
         if st.session_state["password"] == PASSWORD:
             st.session_state["password_correct"] = True
         else:
             st.session_state["password_correct"] = False
 
-    if "password_correct" not in st.session_state:
-        st.text_input("Nama:", key="user_name")
-        st.text_input("Sekolah/Institusi/Kelab:", key="user_school")
-        st.text_input("Masukkan kata laluan:", type="password", on_change=password_entered, key="password")
-        return False
-    elif not st.session_state["password_correct"]:
-        st.text_input("Nama:", key="user_name")
-        st.text_input("Sekolah/Institusi/Kelab:", key="user_school")
-        st.text_input("Masukkan kata laluan:", type="password", on_change=password_entered, key="password")
+    if st.session_state["password_correct"] is False:
         st.error("Kata laluan salah")
-        return False
-    else:
-        # Successful login, show welcome page
-        name = st.session_state.get("user_name", "Pengguna")
-        school = st.session_state.get("user_school", "-")
-        st.success(f"Selamat datang, **{name}** dari **{school}**!")
-        return True
+
+    # Footer / credits
+    st.markdown("""
+        <div style='text-align: center; font-size: 12px; color: gray; margin-top: 30px;'>
+            Developed by Khalis | AI-assisted (ChatGPT)
+        </div>
+    """, unsafe_allow_html=True)
+
+    return st.session_state["password_correct"] is True
+
+
+
 
 # -------------------
 # Points logic
