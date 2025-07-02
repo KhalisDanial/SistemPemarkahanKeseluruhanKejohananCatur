@@ -1,0 +1,7 @@
+[theme]
+base = "dark"
+primaryColor = "#FF7F0E"                  # Bright orange highlight (buttons, sliders)
+backgroundColor = "#0D0D0D"               # Almost black background
+secondaryBackgroundColor = "#1A1A1A"      # Dark gray cards, sidebar
+textColor = "#FFFFFF"                     # White text
+font = "sans serif"
