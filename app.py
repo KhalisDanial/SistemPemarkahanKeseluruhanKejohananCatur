@@ -8,7 +8,7 @@ import textwrap
 from pathlib import Path
 
 # Choose your secret password
-PASSWORD = "shidamdan2000"
+PASSWORD = st.secrets["passwords"]["main"]
 
 def check_password():
     def password_entered():
