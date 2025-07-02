@@ -6,6 +6,9 @@ import plotly.graph_objects as go
 import base64
 import textwrap
 from pathlib import Path
+from google.oauth2.service_account import Credentials
+import gspread
+from datetime import datetime
 
 # Choose your secret password
 PASSWORD = st.secrets["passwords"]["main"]
@@ -35,7 +38,6 @@ def check_password():
         st.success(f"Selamat datang, **{name}** dari **{school}**!")
         return True
 
-
 # -------------------
 # Points logic
 # -------------------
@@ -50,18 +52,9 @@ def assign_points(rank):
 # Helper to find header row
 # -------------------
 def find_header_row(df, required_headers):
-    """
-    Find the header row index in df that matches required_headers 
-    (case-insensitive, partial match).
-    """
     for idx, row in df.iterrows():
         row_values = row.fillna('').astype(str).str.lower().str.strip()
-
-        matches = []
-        for req in required_headers:
-            found = any(re.search(req.lower(), cell) for cell in row_values)
-            matches.append(found)
-
+        matches = [any(re.search(req.lower(), cell) for cell in row_values) for req in required_headers]
         if all(matches):
             return idx
     return None
@@ -75,26 +68,16 @@ st.set_page_config(page_title="Sistem Pemarkahan Keseluruhan Kejohanan Catur", l
 # Helper functions
 # -------------------
 def get_base64_image(image_path):
-    """Read local image and encode it as base64 string."""
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
 def load_and_process_excel(file, required_columns):
-    """
-    Load Excel, find header, rename columns, calculate points.
-    Returns processed DataFrame.
-    """
     raw_df = pd.read_excel(file, header=None)
-
     header_row_idx = find_header_row(raw_df, required_columns)
     if header_row_idx is None:
         raise ValueError("Could not find header row with required columns.")
-
-    # Reload with correct header
     df = pd.read_excel(file, header=header_row_idx)
     df.columns = df.columns.str.strip()
-
-    # Map required columns dynamically
     column_mapping, matched = {}, set()
     for col in df.columns:
         col_lower = col.lower()
@@ -103,16 +86,33 @@ def load_and_process_excel(file, required_columns):
                 column_mapping[col] = req
                 matched.add(req)
                 break
-
     if set(column_mapping.values()) != set(required_columns):
         raise ValueError(f"Missing required columns after mapping. Found: {list(column_mapping.values())}")
-
     df = df.rename(columns=column_mapping)[required_columns]
     df["Points"] = df["Rank"].apply(assign_points)
     return df
 
 
 if check_password():
+
+    # Get user info
+    name = st.session_state.get("user_name", "Pengguna")
+    school = st.session_state.get("user_school", "-")
+
+    # Log user info to Google Sheets
+    try:
+        gcp_secrets = st.secrets["gcp_service_account"]
+        creds = Credentials.from_service_account_info(
+            gcp_secrets,
+            scopes=["https://www.googleapis.com/auth/spreadsheets"]
+        )
+        client = gspread.authorize(creds)
+        SPREADSHEET_NAME = "Users Logs"  # <-- Change to your sheet name
+        sheet = client.open(SPREADSHEET_NAME).sheet1
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        sheet.append_row([timestamp, name, school])
+    except Exception as e:
+        st.error(f"Gagal merekod data ke Google Sheets: {e}")
 
     # -------------------
     # Paths & encode images
@@ -406,7 +406,5 @@ if check_password():
             xanchor='center'
         )
 
-
-
-
         st.plotly_chart(fig, use_container_width=True)
+    st.write("Main app content here...")
